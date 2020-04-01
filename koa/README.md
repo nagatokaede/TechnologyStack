@@ -14,8 +14,8 @@ Koa.js 作为一个web框架，总结出来只提供了两种能力
     * 间接中间件
 * [官方提供常用中间件](#官方提供常用中间件)
     * koa-logger
-    * koa-static
     * koa-router
+    * koa-static
 * [自制或第三方中间件](#自制或第三方中间件)
 
 HTTP服务
@@ -377,6 +377,109 @@ app.use(logger({
   }
 }));
 ```
+
+### koa-router
+koa-router 是常用的 koa 的路由库
+
+安装
+```Bash
+$ npm install koa-router
+```
+使用
+```js
+const Koa = require('koa');
+const KoaRouter = require('koa-router');
+
+const app = new Koa();
+// 创建 router 实例对象
+const router = new KoaRouter();
+
+//注册路由
+router.get('/', async (ctx, next) => {
+  console.log('index');
+  ctx.body = 'index';
+});
+
+app.use(router.routes());  // 添加路由中间件
+app.use(router.allowedMethods()); // 对请求进行一些限制处理
+
+app.listen(3000);
+```
+上面的示例使用了 GET 方法来进行注册根路由, 实际上不仅可以使用 GET 方法
+
+router.get|put|post|patch|delete|del ⇒ Router
+
+而 router.all() 可用于匹配所有方法
+```js
+router
+  .get('/', (ctx, next) => {
+    ctx.body = 'Hello World!';
+  })
+  .post('/users', (ctx, next) => {
+    // ...
+  })
+  .put('/users/:id', (ctx, next) => {
+    // ...
+  })
+  .del('/users/:id', (ctx, next) => {
+    // ...
+  })
+  .all('/users/:id', (ctx, next) => {
+    // ...
+  });
+```
+捕获命名的路由参数并将其添加到 `ctx.params`
+```js
+router.get('/:category/:title', (ctx, next) => {
+  console.log(ctx.params);
+  // => { category: 'programming', title: 'how-to-node' }
+});
+```
+支持嵌套路由器
+```js
+const forums = new Router();
+const posts = new Router();
+
+posts.get('/', (ctx, next) => {});
+posts.get('/:pid', (ctx, next) => {});
+forums.use('/forums/:fid/posts', posts.routes(), posts.allowedMethods());
+
+// responds to "/forums/123/posts" and "/forums/123/posts/123"
+app.use(forums.routes());
+```
+路由路径可以在路由器级别添加前缀
+```js
+const router = new Router({
+  prefix: '/users'
+});
+
+router.get('/'); // responds to "/users"
+router.get('/:id'); // responds to "/users/:id"
+```
+可以使用多个中间件
+```js
+router.get(
+  '/users/:id',
+  (ctx, next) => {
+    return User.findOne(ctx.params.id).then(function(user) {
+      ctx.user = user;
+      next();
+    });
+  },
+  ctx => {
+    console.log(ctx.user);
+    // => { id: 17, name: "Alex" }
+  }
+);
+```
+
+router 参数
+
+|Param |Type  |Description|
+|------|------|------|
+|path  |String|      |	
+|[middleware]|function|route middleware(s)|
+|callback    |function|route callback|
 
 自制或第三方中间件
 -------------------
