@@ -15,6 +15,7 @@ Koa.js 作为一个web框架，总结出来只提供了两种能力
 * [官方提供常用中间件](#官方提供常用中间件)
     * koa-logger
     * koa-static
+    * koa-router
 * [自制或第三方中间件](#自制或第三方中间件)
 
 HTTP服务
@@ -46,28 +47,28 @@ const middleware1 = async (ctx, next) => {
   console.log(1); 
   await next();  
   console.log(6);   
-}
+};
 
 const middleware2 = async (ctx, next) => { 
   console.log(2); 
   await next();  
   console.log(5);   
-}
+};
 
 const middleware3 = async (ctx, next) => { 
   console.log(3); 
   await next();  
   console.log(4);   
-}
+};
 
 app.use(middleware1);
 app.use(middleware2);
 app.use(middleware3);
 app.use(async(ctx, next) => {
   ctx.body = 'hello world'
-})
+});
 
-app.listen(3000)
+app.listen(3000);
 
 // 启动访问浏览器
 // 控制台会出现以下结果
@@ -94,7 +95,7 @@ const middleware = async function(ctx, next) {
     ctx.throw(500)
   }
   await next();
-}
+};
 
 const page = async function(ctx, next) {
   ctx.body = `
@@ -105,7 +106,7 @@ const page = async function(ctx, next) {
         </body>
       </html>
     `; 
-}
+};
 
 app.use(middleware);
 app.use(page);
@@ -123,7 +124,7 @@ let app = new Koa();
 const middleware = async function(ctx, next) {
   ctx.response.type = 'text/plain';
   await next();
-}
+};
 
 const page = async function(ctx, next) {
   ctx.body = `
@@ -134,14 +135,14 @@ const page = async function(ctx, next) {
         </body>
       </html>
     `; 
-}
+};
 
 app.use(middleware);
 app.use(page);
 
 app.listen(3001, function(){
   console.log('the demo is start at port 3001');
-})
+});
 ```
 
 * context挂载代理
@@ -184,7 +185,7 @@ const middleware = async function(ctx, next) {
     return getMemInfo()
   };
   await next();
-}
+};
 
 const page = async function(ctx, next) {
   const serverInfo = ctx.getServerInfo();
@@ -196,14 +197,14 @@ const page = async function(ctx, next) {
         </body>
       </html>
     `; 
-}
+};
 
 app.use(middleware);
 app.use(page);
 
 app.listen(3001, function(){
   console.log('the demo is start at port 3001');
-})
+});
 ```
 
 * 初始化实例挂载代理context
@@ -234,7 +235,7 @@ const middleware = function(app) {
     }
     return getMemInfo()
   };
-}
+};
 
 middleware(app);
 
@@ -248,7 +249,7 @@ const page = async function(ctx, next) {
         </body>
       </html>
     `; 
-}
+};
 
 app.use(page);
 
@@ -331,9 +332,9 @@ class Middleware{
 }
 
 const middleware = new Middleware();
-middleware.get('/page/001', async(ctx, next) => { ctx.body = 'page 001' })
-middleware.get('/page/002', async(ctx, next) => { ctx.body = 'page 002' })
-middleware.get('/page/003', async(ctx, next) => { ctx.body = 'page 003' })
+middleware.get('/page/001', async(ctx, next) => { ctx.body = 'page 001' });
+middleware.get('/page/002', async(ctx, next) => { ctx.body = 'page 002' });
+middleware.get('/page/003', async(ctx, next) => { ctx.body = 'page 003' });
 
 app.use(middleware.middlewares());
 
@@ -344,3 +345,38 @@ app.listen(3001, function(){
 
 官方提供常用中间件
 -----------
+### koa-logger
+Koa的开发风格记录器中间件,请求接收兼容。
+
+安装
+```Bash
+$ npm install koa-logger
+```
+
+使用
+```js
+const logger = require('koa-logger');
+const Koa = require('koa');
+
+const app = new Koa();
+app.use(logger());
+```
+
+自定义
+```js
+app.use(logger((str, args) => {
+  // 将koa记录器重定向到其他输出管道
+  // 默认为process.stdout（通过console.log函数）
+}))
+```
+或者
+```js
+app.use(logger({
+  transporter: (str, args) => {
+    // ...
+  }
+}));
+```
+
+自制或第三方中间件
+-------------------
