@@ -23,6 +23,7 @@ TechnologyStack
 * node
 * npm
 * postMessage
+* shadowsocks
 * vue
 * vuex
 * wangEditor
