@@ -3,12 +3,12 @@ shadowsocks
 > 代理 : ）
 
 ### 目录
-* [Ubuntu 16.](#ubuntu 16.)
+* [Ubuntu 16.](#ubuntu-16)
     * 安装
     * 配置
     * 启动
     * 开机自启动
-* [Ubuntu 18.](#ubuntu 18.)
+* [Ubuntu 18.](#ubuntu-18)
     * 安装
     * 配置
     * chacha20
