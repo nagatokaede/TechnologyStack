@@ -3,6 +3,7 @@ ndoe
 > Node.js 是一个基于 Chrome V8 引擎的 JavaScript 运行时。
 
 ### 目录
+* [安装](#安装)
 * [fs](#fs)
     * 检测当前进程对文件的权限
     * 创建目录
@@ -16,6 +17,33 @@ ndoe
     * 简单的流式文件读写
     * 其他文件操作方法
 
+安装
+-----------------
+> windows 前往官网下载安装包
+
+Ubuntu 安装
+* 使用PPA安装
+
+> 要获取最新版本的Node.js，您可以添加NodeSource维护的PPA（个人软件包存档）。
+
+首先，安装PPA，以访问其内容。从主目录中，使用curl来检索首选版本的安装脚本，并确保将其替换10.x为首选版本字符串（如果有）：
+
+```Bash
+$ cd ~
+$ curl -sL https://deb.nodesource.com/setup_10.x -o nodesource_setup.sh
+```
+您可以使用nano（或您喜欢的文本编辑器）检查此脚本的内容：
+```Bash
+$ nano nodesource_setup.sh
+```
+在下面运行脚本：
+```Bash
+$ bash nodesource_setup.sh
+```
+PPA将添加到您的配置中，并且本地软件包缓存将自动更新。从 `Nodesource` 运行安装脚本之后，可以按照与上面相同的方式安装Node.js软件包：
+```Bash
+sudo apt install nodejs
+```
 
 fs(文件系统)
 -----------------
