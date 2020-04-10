@@ -17,6 +17,7 @@ Koa.js 作为一个web框架，总结出来只提供了两种能力
     * koa-router
     * koa-static
 * [自制或第三方中间件](#自制或第三方中间件)
+    * koa-body
 
 HTTP服务
 -----------
@@ -483,3 +484,97 @@ router 参数
 
 自制或第三方中间件
 -------------------
+### koa-body
+> 同时支持 `post` 请求和文件上传可代替 `koa-bodyparser` 和 `koa-multer`
+
+功能齐全的 `koa` 正文解析器中间件。支持 `multipart`，`urlencoded` 和 `json` 请求机构。
+
+提供与 `Express` 相同的功能的 `bodyParser` - `multer` 。
+
+#### 安装
+```Bash
+$ npm install koa-body
+```
+#### app.js
+```js
+const koaBody = require('koa-body');
+const app = new koa();
+app.use(koaBody({
+  multipart:true, // 支持文件上传
+  encoding:'gzip',
+  formidable:{
+    uploadDir:path.join(__dirname,'public/upload/'), // 设置文件上传目录
+    keepExtensions: true,    // 保持文件的后缀
+    maxFieldsSize:2 * 1024 * 1024, // 文件上传大小
+    onFileBegin:(name,file) => { // 文件上传前的设置
+      // console.log(`name: ${name}`);
+      // console.log(file);
+    },
+  }
+}));
+```
+#### 有用的参数
+* koa-body 的基本参数
+
+|参数名| 描述 | 类型 |默认值|
+|-----|-----|-----|-----|
+|patchNode	|将请求体打到原生 node.js 的ctx.req中	|Boolean	|false
+|patchKoa	|将请求体打到 koa 的 ctx.request 中	|Boolean	|true
+|jsonLimit	|JSON 数据体的大小限制	|String / Integer	|1mb
+|formLimit	|限制表单请求体的大小	|String / Integer	|56kb
+|textLimit	|限制 text body 的大小	|String / Integer	|56kb
+|encoding	|表单的默认编码	|String	|utf-8
+|multipart	|是否支持 multipart-formdate 的表单	|Boolean	|false
+|urlencoded	|是否支持 urlencoded 的表单	|Boolean	|true
+|text	|是否解析 text/plain 的表单	|Boolean	|true
+|json	|是否解析 json 请求体	|Boolean	|true
+|jsonStrict	|是否使用 json 严格模式，true 会只处理数组和对象	|Boolean	|true
+|formidable	|配置更多的关于 multipart 的选项	|Object	|{}
+|onError	|错误处理	|Function	|function(){}
+|stict	|严格模式,启用后不会解析  GET, HEAD, DELETE  请求	|Boolean	|true
+
+* formidable 的相关配置参数
+
+|参数名| 描述 | 类型 |默认值|
+|-----|-----|-----|-----|
+|maxFields	|限制字段的数量	|Integer	|1000
+|maxFieldsSize	|限制字段的最大大小	|Integer	|2 * 1024 * 1024
+|uploadDir	|文件上传的文件夹	|String	|os.tmpDir()
+|keepExtensions	|保留原来的文件后缀	|Boolean	|false
+|hash	|如果要计算文件的 hash，则可以选择 md5/sha1	|String	|false
+|multipart	|是否支持多文件上传	|Boolean	|true
+|onFileBegin	|文件上传前的一些设置操作	|Function	|function(name,file){}
+
+关于 onFileBegin 的更多信息可以查看：
+* https://github.com/felixge/node-formidable#filebegin
+
+#### 获取文件上传后的信息
+> 这些代码是在路由中体现的
+
+需要注意的是，如果是获取上传后文件的信息，则需要在 ctx.request.files 中获取。
+
+如果是获取其他的表单字段，则需要在 ctx.request.body 中获取，这是由 co-body 决定的（默认情况）。
+
+```js
+router.get('/', async (ctx) => {
+  await ctx.render('index');
+});
+
+router.post('/',async (ctx)=>{
+  console.log(ctx.request.files);
+  console.log(ctx.request.body);
+  ctx.body = JSON.stringify(ctx.request.files);
+});
+```
+#### 结果
+因为默认开启多个文件上传，因此 ctx.request.files 是一个对象，
+
+而且是通过表单的 name=photo 属性作为对象的 key,值便是一个 File 对象，有用的字段如下：
+
+|字段名	|描述|
+|-------|---|
+|size	|文件大小|
+|path	|文件上传后的目录|
+|name	|文件的原始名称|
+|type	|文件类型|
+|lastModifiedDate	|上次更新的时间|
