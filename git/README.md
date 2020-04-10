@@ -3,6 +3,7 @@ git
 
 ## 目录
 * [.gitignore](#.gitignore)
+* [获取远程分支代码](#获取远程分支代码)
 
 .gitignore
 -----------
@@ -26,3 +27,45 @@ doc/*.txt
 # 忽略所有的 .pdf 文件 在 doc/ directory 下的
 doc/**/*.pdf
 ```
+
+获取远程分支代码
+-------------------
+* 新建一个文件夹作为这个项目的文件夹
+```Bash
+$ mkdir ObjectName
+```
+
+* 初始化
+```Bash
+$ git init
+```
+
+* 自己要与origin master建立连接（下划线为远程仓库链接）
+```Bash
+$ git remote add origin git@github.com:nagatokaede/WebProjectMain.git
+```
+
+* 把远程分支拉到本地
+
+git fetch origin dev（dev为远程仓库的分支名）
+```Bash
+$ git fetch origin 0.0.1
+```
+
+* 在本地创建分支dev并切换到该分支
+
+git checkout -b dev(本地分支名称) origin/dev(远程分支名称)
+```Bash
+$ git checkout -b 0.0.1 origin/0.0.1
+```
+
+* 把某个分支上的内容都拉取到本地
+
+git pull origin dev(远程分支名称)
+```Bash
+$ git pull origin 0.0.1
+```
+
+finish!!!
+
+之后只要仓库有了更新只要 git pull origin 0.0.1 就可以拉去远程这个分支的更新代码了
