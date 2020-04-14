@@ -500,16 +500,19 @@ $ npm install koa-body
 const koaBody = require('koa-body');
 const app = new koa();
 app.use(koaBody({
-  multipart:true, // 支持文件上传
-  encoding:'gzip',
-  formidable:{
-    uploadDir:path.join(__dirname,'public/upload/'), // 设置文件上传目录
+  multipart: true, // 支持文件上传
+  encoding: 'gzip',
+  formidable: {
+    uploadDir: path.join(__dirname,'public/upload/'), // 设置文件上传目录
     keepExtensions: true,    // 保持文件的后缀
-    maxFieldsSize:2 * 1024 * 1024, // 文件上传大小
-    onFileBegin:(name,file) => { // 文件上传前的设置
+    maxFieldsSize: 2 * 1024 * 1024, // 文件上传大小
+    onFileBegin: (name,file) => { // 文件上传前的设置
       // console.log(`name: ${name}`);
       // console.log(file);
     },
+    onError: err => {
+      console.warn(err);
+    }
   }
 }));
 ```
@@ -538,7 +541,7 @@ app.use(koaBody({
 |参数名| 描述 | 类型 |默认值|
 |-----|-----|-----|-----|
 |maxFields	|限制字段的数量	|Integer	|1000
-|maxFieldsSize	|限制字段的最大大小	|Integer	|2 * 1024 * 1024
+|maxFieldsSize	|限制字段的最大大小(文件除外)	|Integer	|2 * 1024 * 1024
 |uploadDir	|文件上传的文件夹	|String	|os.tmpDir()
 |keepExtensions	|保留原来的文件后缀	|Boolean	|false
 |hash	|如果要计算文件的 hash，则可以选择 md5/sha1	|String	|false
