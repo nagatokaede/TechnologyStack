@@ -18,6 +18,7 @@ Koa.js 作为一个web框架，总结出来只提供了两种能力
     * koa-static
 * [自制或第三方中间件](#自制或第三方中间件)
     * koa-body
+    * busboy
 
 HTTP服务
 -----------
@@ -581,3 +582,63 @@ router.post('/',async (ctx)=>{
 |name	|文件的原始名称|
 |type	|文件类型|
 |lastModifiedDate	|上次更新的时间|
+
+### busboy
+> busboy 模块是用来解析POST请求，node原生req中的文件流。
+>
+> 既然能拿到流，那就能玩更多 happy 的事情了。比如直接流到OSS
+
+####安装
+```Bash
+$ npm install --save busboy
+```
+开始使用
+```js
+const inspect = require('util').inspect;
+const path = require('path');
+const fs = require('fs');
+const Busboy = require('busboy');
+
+// req 为node原生请求
+const busboy = new Busboy({ headers: req.headers });
+
+// ...
+
+// 监听文件解析事件
+busboy.on('file', function(fieldname, file, filename, encoding, mimetype) {
+  console.log(`File [${fieldname}]: filename: ${filename}`);
+
+
+  // 文件保存到特定路径
+  file.pipe(fs.createWriteStream('./upload'));
+
+  // 开始解析文件流
+  file.on('data', function(data) {
+    console.log(`File [${fieldname}] got ${data.length} bytes`)
+  });
+
+  // 解析文件结束
+  file.on('end', function() {
+    console.log(`File [${fieldname}] Finished`)
+  })
+});
+
+// 监听请求中的字段
+busboy.on('field', function(fieldname, val, fieldnameTruncated, valTruncated) {
+  console.log(`Field [${fieldname}]: value: ${inspect(val)}`)
+});
+
+// 监听结束事件
+busboy.on('finish', function() {
+  console.log('Done parsing form!');
+  res.writeHead(303, { Connection: 'close', Location: '/' });
+  res.end()
+});
+
+// 解析错误事件
+busboy.on('error', function(err) {
+  console.log('文件上出错');
+  reject('upload error')
+});
+req.pipe(busboy)
+```
