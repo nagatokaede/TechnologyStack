@@ -61,7 +61,9 @@ module.exports = {
     // 详细的 plugins 配置
   ],
   // 模式
-  mode: 'development', // 开发模式
+  // 开发模式 不压缩 js 代码
+  mode: 'development',
+  // 生产模式 压缩 js 代码
   // mode: 'production'
 }
 ```
@@ -72,6 +74,17 @@ loader
 > webpack 只懂 js/json 。loader 就是用来翻译的
 
 ### 打包样式资源
+安装 css
+```Bsh
+$ npm install css-loader style-loader --save-dev
+```
+
+安装 less
+```Bash
+$ npm install less less-loader --save-dev
+```
+
+webpack.config.js
 ```js
 const { resolve } = require('path');
 
@@ -120,6 +133,12 @@ module.exports = {
 ```
 
 ### 打包图片资源
+安装
+```Bash
+$ npm install url-loader file-loader html-loader --save-dev
+```
+
+webpack.config.js
 ```js
 const { resolve } = require('path');
 
@@ -138,7 +157,7 @@ module.exports = {
         // 使用一个 loader 
         // 安装 npm install url-loader file-loader --save-dev
         // url-loader 依赖 file-loader
-        use: 'url-loader',
+        loader: 'url-loader',
         options: {
           // 图片大小小于 8kb ，就会被 base64 处理，减少请求
           limit: 8 * 1024,
@@ -169,6 +188,12 @@ module.exports = {
 ```
 
 ### 打包其它资源
+安装
+```Bash
+$ npm install file-loader --save-dev
+```
+
+webpack.config.js
 ```js
 const { resolve } = require('path');
 
@@ -196,6 +221,273 @@ module.exports = {
     // 详细的 plugins 配置
   ],
   mode: 'development'
+}
+```
+
+### CSS 兼容性性处理
+不同浏览器对某些 css 会有特殊前缀，这里使用 postcss 打包时自动添加这些前缀
+
+安装
+```Bash
+$ npm install postcss-loader postcss-preset-env --save-dev
+```
+
+webpack.config.js 配置
+```js
+const { resolve } = require('path');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+
+// 设置 nodejs 环境变量
+// browserslist 默认加载生产环境，开发环境须修改 nodejs 环境变量
+process.env.NODE_ENV = 'development';
+
+module.exports = {
+  entry: './client/main.js',
+  output: {
+    filename: 'build.js',
+    path: resolve(__dirname, 'webapp'),
+  },
+  module: {
+    rules: [
+      // 详细的 loader 配置
+      {
+        test: /\.css$/,
+        use: [
+          MiniCssExtractPlugin.loader,
+          'css-loader',
+          /*
+           * css 兼容性处理： postcss -> postcss-loader postcss-preset-env
+           * 
+           * postcss-preset-env 帮助 postcss 找到 package.json 中 browserslist 里面的配置
+           * 通过配置加载指定的 css 兼容性样式
+           * 
+           * "browserslist": {
+           *   "development": [
+           *     "last 1 chrome version",
+           *     "last 1 firefox version",
+           *     "last 1 safari version"
+           *   ],
+           *   "production": [
+           *     ">0.2%",
+           *     "not dead",
+           *     "not op_mini_all"
+           *   ]
+           * }
+          */
+          // 使用 loader 的默认配置
+          // 'postcss-loader',
+          // 修改 loader 配置
+          {
+            loader: 'postcss-loader',
+            options: {
+              ident: 'postcss',
+              plugins: () => {
+                // postcss 插件
+                require('postcss-preset-env')()
+              }
+            }
+          }
+        ]
+      },
+    ]
+  },
+  // plugins
+  plugins: [
+    // 详细的 plugins 配置
+    new MiniCssExtractPlugin({
+      // 对输出的文件重命名
+      filename: 'css/build.css'
+    }),
+  ],
+  mode: 'development',
+}
+```
+
+package.json 详细查询 `browserslist`
+```json
+{
+  "name": "vue-webapp",
+  "version": "0.0.1",
+  "description": "vue web app project",
+  "private": true,
+  "scripts": {
+  },
+  "author": "nagato kaede",
+  "license": "ISC",
+  "dependencies": {
+  },
+  "devDependencies": {
+  },
+  "browserslist": {
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ],
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini_all"
+    ]
+  }
+}
+
+```
+
+### js 语法检查 eslint
+使语法风格更标准化
+
+安装 `eslint` 语法检查
+```Bash
+$ npm install eslint eslint-loader --save-dev
+```
+
+安装 `airbnb` js 标准规则
+```Bahs
+$ npm install eslint-config-airbnb-base eslint-plugin-import --save-dev
+```
+
+webpack.config.js
+```js
+const { resolve } = require('path');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+
+module.exports = {
+  entry: './client/main.js',
+  output: {
+    filename: 'build.js',
+    path: resolve(__dirname, 'webapp'),
+  },
+  module: {
+    rules: [
+      // 详细的 loader 配置
+      /*
+       * 语法检查：eslint-loader eslint
+       *   注意：只检查自己写的源代码，第三方库不检查
+       *   设置检查规则：
+       *     package.json 中的 eslintConfig 中设置
+       *       "eslintConfig": {
+       *         "extends": "airbnb-base"
+       *       }
+       *     airbnb --> eslint-config-airbnb-base eslint-plugin-import eslint
+       */
+      {
+        // 只检查 js 文件
+        test: /\.js$/,
+        // 排除第三方库
+        exclude: /node_modules/,
+        loader: 'eslint-loader',
+        options: {
+          // 自动修复 eslint 错误
+          fix: true
+        }
+      },
+    ]
+  },
+  // plugins
+  plugins: [
+    // 详细的 plugins 配置
+    new MiniCssExtractPlugin({
+      // 对输出的文件重命名
+      filename: 'css/build.css'
+    }),
+  ],
+  mode: 'development',
+}
+```
+
+package.json
+```json
+{
+  "name": "vue-webapp",
+  "version": "0.0.1",
+  "description": "vue web app project",
+  "private": true,
+  "scripts": {
+  },
+  "author": "nagato kaede",
+  "license": "ISC",
+  "dependencies": {
+  },
+  "devDependencies": {
+  },
+  "eslintConfig": {
+    "extends": "airbnb-base"
+  }
+}
+```
+
+### js 兼容性处理 `babel`
+编译 js 高级语法使其兼容更多恶心的浏览器环境
+
+安装 babel loader
+```Bash
+$ npm install babel-loader @babel/core @babel/preset-env --save-dev
+```
+
+```js
+const { resolve } = require('path');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+
+module.exports = {
+  entry: './client/main.js',
+  output: {
+    filename: 'build.js',
+    path: resolve(__dirname, 'webapp'),
+  },
+  module: {
+    rules: [
+      // 详细的 loader 配置
+      /*
+       * js 兼容性处理：babel-loader @babel/core @babel/preset-env
+       *   1. 基本兼容性处理 --> @babel/preset-env
+       *     问题：只能转换基本语法，如 promise 高级语法不能转换
+       *   2. 全部 js 兼容性处理 --> @babel/polyfill
+       *     问题：只想要解决部分兼容性问题，但是将所有兼容性代码全部引入，体积太大
+       *   3. 需要做兼容性处理的就做按需加载 --> core-js
+       */
+      {
+        // 只检查 js 文件
+        test: /\.js$/,
+        // 排除第三方库
+        exclude: /node_modules/,
+        loader: 'babel-loader',
+        options: {
+          // 预设：指示 babel 做怎么样的兼容性处理
+          presets: [
+            [
+              '@babel/preset-env',
+              {
+                // 按需加载
+                useBuiltIns: 'usage',
+                // 指定 core-js 版本
+                corejs: {
+                  version: 3
+                },
+                // 指定兼容性做到哪些版本浏览器
+                targets: {
+                  chrome: '60',
+                  firefox: '60',
+                  ie: '9',
+                  safari: '10',
+                  edge: '17'
+                }
+              }
+            ]
+          ]
+        }
+      },
+    ]
+  },
+  // plugins
+  plugins: [
+    // 详细的 plugins 配置
+    new MiniCssExtractPlugin({
+      // 对输出的文件重命名
+      filename: 'css/build.css'
+    }),
+  ],
+  mode: 'development',
 }
 ```
 
@@ -232,7 +524,13 @@ module.exports = {
     // 创建一个 HTML 文件，自动引入打包输出的所有资源（JS/CSS）
     new HtmlWebpackPlugin({
       // 复制 ./client/index.html 文件，并自动引入打包输出所有资源（JS/CSS）
-      template: './client/index.html'
+      template: './client/index.html',
+      minify: {
+        // 移除空格
+        collapseWhitespace: true,
+        // 移除注释
+        removeComments: true
+      }
     })
   ],
   mode: 'development'
@@ -281,6 +579,54 @@ module.exports = {
       // 对输出的文件重命名
       filename: 'css/build.css'
     }),
+  ],
+  mode: 'development',
+}
+```
+
+### CSS 文件压缩
+压缩 css 内容为一行，使用工具 `optimize-css-assets-webpack-plugin`
+
+安装
+```Bash
+$ npm install optimize-css-assets-webpack-plugin --save-dev
+```
+
+webpack.config.js
+```js
+const { resolve } = require('path');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const OptimizeCssAssetsWebpackPlugin = require('optimize-css-assets-webpack-plugin');
+
+process.env.NODE_ENV = 'development';
+
+module.exports = {
+  entry: './client/main.js',
+  output: {
+    filename: 'build.js',
+    path: resolve(__dirname, 'webapp'),
+  },
+  module: {
+    rules: [
+      // 详细的 loader 配置
+      {
+        test: /\.css$/,
+        use: [
+          MiniCssExtractPlugin.loader,
+          'css-loader',
+        ]
+      },
+    ]
+  },
+  // plugins
+  plugins: [
+    // 详细的 plugins 配置
+    new MiniCssExtractPlugin({
+      // 对输出的文件重命名
+      filename: 'css/build.css'
+    }),
+    // 压缩 CSS 文件
+    new OptimizeCssAssetsWebpackPlugin(),
   ],
   mode: 'development',
 }
@@ -407,116 +753,3 @@ module.exports = {
   mode: 'development',
 }
 ```
-
-CSS 兼容性性处理
--------------------------------
-不同浏览器对某些 css 会有特殊前缀，这里使用 postcss 打包时自动添加这些前缀
-
-安装
-```Bash
-$ npm install postcss-loader postcss-preset-env --save-dev
-```
-
-webpack.config.js 配置
-```js
-const { resolve } = require('path');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-
-// 设置 nodejs 环境变量
-// browserslist 默认加载生产环境，开发环境须修改 nodejs 环境变量
-process.env.NODE_ENV = 'development';
-
-module.exports = {
-  entry: './client/main.js',
-  output: {
-    filename: 'build.js',
-    path: resolve(__dirname, 'webapp'),
-  },
-  module: {
-    rules: [
-      // 详细的 loader 配置
-      {
-        test: /\.css$/,
-        use: [
-          MiniCssExtractPlugin.loader,
-          'css-loader',
-          /*
-           * css 兼容性处理： postcss -> postcss-loader postcss-preset-env
-           * 
-           * postcss-preset-env 帮助 postcss 找到 package.json 中 browserslist 里面的配置
-           * 通过配置加载指定的 css 兼容性样式
-           * 
-           * "browserslist": {
-           *   "development": [
-           *     "last 1 chrome version",
-           *     "last 1 firefox version",
-           *     "last 1 safari version"
-           *   ],
-           *   "production": [
-           *     ">0.2%",
-           *     "not dead",
-           *     "not op_mini_all"
-           *   ]
-           * }
-          */
-          // 使用 loader 的默认配置
-          // 'postcss-loader',
-          // 修改 loader 配置
-          {
-            loader: 'postcss-loader',
-            options: {
-              ident: 'postcss',
-              plugins: () => {
-                // postcss 插件
-                require('postcss-preset-env')()
-              }
-            }
-          }
-        ]
-      },
-    ]
-  },
-  // plugins
-  plugins: [
-    // 详细的 plugins 配置
-    new MiniCssExtractPlugin({
-      // 对输出的文件重命名
-      filename: 'css/build.css'
-    }),
-  ],
-  mode: 'development',
-}
-```
-
-package.json 详细查询 `browserslist`
-```json
-{
-  "name": "vue-webapp",
-  "version": "0.0.1",
-  "description": "vue web app project",
-  "private": true,
-  "scripts": {
-  },
-  "author": "nagato kaede",
-  "license": "ISC",
-  "dependencies": {
-  },
-  "devDependencies": {
-  },
-  "browserslist": {
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ],
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini_all"
-    ]
-  }
-}
-
-```
-
-
