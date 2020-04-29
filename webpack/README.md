@@ -72,6 +72,8 @@ loader
 ------------------------------------------
 `webpack` 可以使用 `loader` 来预处理文件。这允许你打包除 `JavaScript` 之外的任何静态资源。
 > webpack 只懂 js/json 。loader 就是用来翻译的
+>
+> 一个文件只能被一个 loader 处理。 enforce: 'pre' 优先执行
 
 ### 打包样式资源
 安装 css
@@ -281,10 +283,10 @@ module.exports = {
             loader: 'postcss-loader',
             options: {
               ident: 'postcss',
-              plugins: () => {
+              plugins: () => [
                 // postcss 插件
                 require('postcss-preset-env')()
-              }
+              ]
             }
           }
         ]
@@ -376,6 +378,8 @@ module.exports = {
         test: /\.js$/,
         // 排除第三方库
         exclude: /node_modules/,
+        // 优先执行，与下一章 babel 共同处理 js 文件时配置优先顺序
+        enforce: 'pre',
         loader: 'eslint-loader',
         options: {
           // 自动修复 eslint 错误
