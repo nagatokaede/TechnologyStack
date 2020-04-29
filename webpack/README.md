@@ -979,6 +979,8 @@ module.exports = {
         exclude: /node_modules/,
         loader: 'babel-loader',
         options: {
+          // babel 缓存，下一次构建时只重新处理更新的文件，使打包更快
+          cacheDirectory: true,
           presets: [
             [
               '@babel/preset-env',
@@ -992,8 +994,6 @@ module.exports = {
                   safari: '10',
                   edge: '17'
                 },
-                // babel 缓存，下一次构建时只重新处理更新的文件，使打包更快
-                cacheDirectory: true,
               }
             ]
           ],
