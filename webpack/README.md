@@ -257,7 +257,7 @@ module.exports = {
         use: [
           MiniCssExtractPlugin.loader,
           'css-loader',
-          /*
+          /**
            * css 兼容性处理： postcss -> postcss-loader postcss-preset-env
            * 
            * postcss-preset-env 帮助 postcss 找到 package.json 中 browserslist 里面的配置
@@ -363,7 +363,7 @@ module.exports = {
   module: {
     rules: [
       // 详细的 loader 配置
-      /*
+      /**
        * 语法检查：eslint-loader eslint
        *   注意：只检查自己写的源代码，第三方库不检查
        *   设置检查规则：
@@ -378,6 +378,8 @@ module.exports = {
         test: /\.js$/,
         // 排除第三方库
         exclude: /node_modules/,
+        // 正常来讲一个文件只能被一个 loader 处理
+        // 当一个文件要被多个 loader 处理，那么一定要指定 loader 执行的优先顺序
         // 优先执行，与下一章 babel 共同处理 js 文件时配置优先顺序
         enforce: 'pre',
         loader: 'eslint-loader',
@@ -442,7 +444,7 @@ module.exports = {
   module: {
     rules: [
       // 详细的 loader 配置
-      /*
+      /**
        * js 兼容性处理：babel-loader @babel/core @babel/preset-env
        *   1. 基本兼容性处理 --> @babel/preset-env
        *     问题：只能转换基本语法，如 promise 高级语法不能转换
@@ -493,6 +495,111 @@ module.exports = {
   ],
   mode: 'development',
 }
+```
+
+### oneOf loader 性能优化
+```js
+const { resolve } = require('path');
+
+module.exports = {
+  entry: './client/main.js',
+  output: {
+    filename: 'js/[hash:10].main.js',
+    path: resolve(__dirname, '../webapp'),
+  },
+  module: {
+    rules: [
+      // 详细 loader 配置
+      {
+        // js 语法检测
+        test: /\.js$/,
+        exclude: /node_modules/,
+        loader: 'eslint-loader',
+        options: {
+          fix: true
+        }
+      },
+      {
+        // 以下 loader 只会匹配一个
+        // 注意：不能有两个匹配处理同一种类型文件
+        oneOf: [
+          {
+            // 处理 css 资源
+            test: /\.css$/,
+            use: [ 'style-loader', 'css-loader' ],
+          },
+          {
+            // 处理 less 资源
+            test: /\.less/,
+            use: [ 'style-loader', 'css-loader', 'less-loader' ]
+          },
+          {
+            // 处理图片资源
+            test: /\.(jpg|png|gif)$/,
+            loader: 'url-loader',
+            options: {
+              limit: 8 * 1024,
+              esModule: false,
+              name: '[hash:10].[ext]',
+              outputPath: 'img'
+            },
+          },
+          {
+            // 处理其它资源
+            exclude: /\.(html|js|css|less|jpg|png|gif|vue)$/,
+            loader: 'file-loader',
+            options: {
+              name: '[hash:10].[ext]',
+              outputPath: 'media'
+            }
+          },
+          {
+        // js 兼容性处理 babel
+        test: /\.js$/,
+        exclude: /node_modules/,
+        loader: 'babel-loader',
+        options: {
+          presets: [
+            [
+              '@babel/preset-env',
+              {
+                useBuiltIns: 'usage',
+                corejs: { version: 3 },
+                targets: {
+                  chrome: '60',
+                  firefox: '60',
+                  ie: '9',
+                  safari: '10',
+                  edge: '17'
+                }
+              }
+            ]
+          ],
+          plugins: [
+            ['import', {
+              libraryName: 'vant',
+              libraryDirectory: 'es',
+              style: true
+            }, 'vant']
+          ]
+        }
+      },
+        ]
+      },
+
+    ]
+  },
+  plugins: [
+    // 详细的 plugins 配置
+  ],
+  devServer: {
+    contentBase: resolve(__dirname, '../webapp'),
+    compress: true,
+    port: 3001,
+    open: true
+  },
+  mode: 'development',
+};
 ```
 
 plugins
@@ -680,15 +787,246 @@ module.exports = {
     // 端口号
     port: 3000,
     // 自动打开浏览器
-    open: true
+    open: true,
+    /**
+     * HMR: hot module replacement 模块热替换
+     * 作用： 一个模块发生变化，只重新打包这一个模块
+     *   极大提升构建速度
+     *   
+     * 样式文件: 可以使用 HMR 功能：因为 style-loader 内部实现了
+     * js 文件：默认不能使用 HMR 功能 --> 需要修改 js 代码，添加 HMR 功能代码
+     *   注意：HMR 功能对 js 的处理，只能处理非入口 js 文件的其它文件
+     * HTML 文件：默认不使用 HMR 功能，同时会导致问题：html 文件不能热更新了~（不用对唯一一个html文件做 HMR 功能）
+     *   解决：修改 entry 入口，将 html 文件引入
+     */
+    // 开启模块热替换
+    hot: true,
   }
 }
+```
+
+main.js
+```js
+if (module.hot) {
+  // 一旦 module.hot 为 true ，说明开启了 HMR 功能。 --> 让 HMR 功能代码生效
+  module.hot.accept('./mode.js', () => {
+    // 方法会监听 mode.js 文件变化，一旦发生变化，其它模块不会重新打包构建。
+    // 会执行后面的回调函数
+    console.info()
+  });
+}
+```
+
+sourceMap
+----------------------------
+调试代码工具
+
+webpack.config.js
+```js
+const { resolve } = require('path');
+
+module.exports = {
+  entry: './client/main.js',
+  output: {
+    filename: 'build.js',
+    path: resolve(__dirname, 'webapp'),
+  },
+  module: {
+    rules: [
+      // 详细的 loader 配置
+    ]
+  },
+  // plugins
+  plugins: [
+    // 详细的 plugins 配置
+  ],
+  mode: 'development',
+  devServer: {
+    contentBase: resolve(__dirname, 'webapp'),
+    compress: true,
+    port: 3000,
+    open: true,
+    hot: true,
+  },
+  devtool: 'eval-source-map',
+  /**
+   * source-map: 一种提供源代码到构建后代码映射的技术（如果构建后代码出错了，通过映射可以追踪源代码错误）
+   * 
+   * 参数:
+   * [inline-|hidden-|eval-][nosources-][cheap-[module-]]source-map
+   * 
+   * source-map: 外部
+   *   错误代码准确信息 和 源代码的错误位置
+   * inline-source-map: 内联
+   *   只生成一个内联 source-map
+   *   错误代码准确信息 和 源代码的错误位置
+   * hidden-source-map: 外部
+   *   错误代码准确信息，但没有错误位置
+   *   不能追踪源代码错误，只能提示到构建后代码的错误位置
+   * eval-source-map: 内联
+   *   每个文件都生成对应的 source-map，都在 eval
+   *   错误代码准确信息 和 源代码的错误位置
+   * nosources-source-map: 外部
+   *   错误代码准确信息，但没有任何源代码信息
+   * cheap-source-map: 外部
+   *   错误代码准确信息 和 源代码的错误位置
+   *   只能精确到行
+   * cheap-module-source-map: 外部
+   *   错误代码准确信息 和 源代码的错误位置
+   *   module 会将 loader 的 source-map加入
+   *   
+   *   内联 和 外部的区别：1 外部生成了文件，内联没有 2. 内联构建速度更快
+   *   
+   *   开发环境：速度快，调试更友好
+   *      速度快(eval > inline > cheap...)
+   *        eval-cheap-source-map
+   *        eval-source-map
+   *      调试更友好
+   *        source-map
+   *        cheap-module-source-map
+   *        cheap-source-map
+   *        
+   *   --> eval-source-map / eval-cheap-module-source-map
+   *        
+   *   生产环境：隐藏源码，调试友好
+   *      内联会让代码体积更大，所以生产环境只考虑外部
+   *      nosources-source-map 全隐藏
+   *      hidden-source-map 只隐藏源代码，会提示构建后代码错误
+   *   
+   *   --> source-map / cheap-module-source-map
+   */
+}
+```
+
+缓存
+----------------------
+webpack.config.js
+```js
+const { resolve } = require('path');
+
+/**
+ * 缓存
+ *    babel 缓存
+ *      cacheDirectory: true
+ *      --> 让第二次打包构建速度更快
+ *      
+ *    文件资源缓存
+ *      hash：每次 webpack 构建时会生成一个唯一的 hash 值
+ *        问：因为 js 和 css 使用一个 hash 值
+ *          如果重新打包会使所有缓存失效
+ *      chunkhash：根据 chunk 生成 hash 值。如果打包来源同一个 chunk 那么 hash 值一样
+ *        问：js 和 css 的 hash 值还是一样
+ *          因为 css 是在 js 中被引入的，所属同一个 chunk
+ *      contenthash：根据文件内容生成 hash 值。不同文件 hash 值一定不一样
+ *        --> 让代码上线运行缓存更好使用
+ */
+
+module.exports = {
+  entry: './client/main.js',
+  output: {
+    filename: 'js/main.[contenthash:10].js',
+    path: resolve(__dirname, '../webapp'),
+  },
+  module: {
+    rules: [
+      // 详细 loader 配置
+      {
+        // js 语法检测
+        test: /\.js$/,
+        exclude: /node_modules/,
+        loader: 'eslint-loader',
+        options: {
+          fix: true
+        }
+      },
+      {
+        // 以下 loader 只会匹配一个
+        // 注意：不能有两个匹配处理同一种类型文件
+        oneOf: [
+          {
+            // 处理 css 资源
+            test: /\.css$/,
+            use: [ 'style-loader', 'css-loader' ],
+          },
+          {
+            // 处理 less 资源
+            test: /\.less/,
+            use: [ 'style-loader', 'css-loader', 'less-loader' ]
+          },
+          {
+            // 处理图片资源
+            test: /\.(jpg|png|gif)$/,
+            loader: 'url-loader',
+            options: {
+              limit: 8 * 1024,
+              esModule: false,
+              name: '[contenthash:10].[ext]',
+              outputPath: 'img'
+            },
+          },
+          {
+            // 处理其它资源
+            exclude: /\.(html|js|css|less|jpg|png|gif|vue)$/,
+            loader: 'file-loader',
+            options: {
+              name: '[contenthash:10].[ext]',
+              outputPath: 'media'
+            }
+          },
+          {
+        // js 兼容性处理 babel
+        test: /\.js$/,
+        exclude: /node_modules/,
+        loader: 'babel-loader',
+        options: {
+          presets: [
+            [
+              '@babel/preset-env',
+              {
+                useBuiltIns: 'usage',
+                corejs: { version: 3 },
+                targets: {
+                  chrome: '60',
+                  firefox: '60',
+                  ie: '9',
+                  safari: '10',
+                  edge: '17'
+                },
+                // babel 缓存，下一次构建时只重新处理更新的文件，使打包更快
+                cacheDirectory: true,
+              }
+            ]
+          ],
+          plugins: [
+            ['import', {
+              libraryName: 'vant',
+              libraryDirectory: 'es',
+              style: true
+            }, 'vant']
+          ]
+        }
+      },
+        ]
+      },
+    ]
+  },
+  plugins: [
+    // 详细的 plugins 配置
+  ],
+  devServer: {
+    contentBase: resolve(__dirname, '../webapp'),
+    compress: true,
+    port: 3001,
+    open: true
+  },
+  mode: 'development',
+};
 ```
 
 基本的开发环境配置
 -------------------------------------------
 ```js
-/*
+/**
  * 开发环境配置
  *   运行项目指令
  *     webpack 会将打包结果输出
