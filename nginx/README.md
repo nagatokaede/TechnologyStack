@@ -10,7 +10,9 @@ Nginx功能丰富，可作为HTTP服务器，也可作为反向代理服务器�
 * [命令](#命令)
     * 查看 `nginx` 路径
     * 查看 `nginx` 配置文件路径
+    * 启动
     * 重启
+    * 关闭
 * [配置](#配置)
 
 安装
@@ -34,9 +36,22 @@ $ ps aux|grep nginx
 $ /usr/sbin/nginx -t
 ```
 
+* 启动
+```Bash
+$ start nginx
+```
+
 * 重启
 ```Bash
 $ nginx -s reload
+```
+
+* 关闭
+```Bash
+# 快速停止nginx
+$ nginx -s stop
+# 完整有序的停止nginx
+$ nginx -s quit
 ```
 
 配置
