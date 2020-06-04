@@ -38,7 +38,7 @@ $ /usr/sbin/nginx -t
 
 * 启动
 ```Bash
-$ start nginx
+$ nginx -c nginx配置文件地址
 ```
 
 * 重启
