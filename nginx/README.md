@@ -14,7 +14,8 @@ Nginx功能丰富，可作为HTTP服务器，也可作为反向代理服务器�
     * 重启
     * 关闭
 * [配置](#配置)
-* [https](#https)
+* [HTTPS](#https)
+* [ERROR](#error)
 
 安装
 ----------------------
@@ -132,4 +133,14 @@ server {
     ssl_certificate .pem;
     ssl_certificate_key .key;
 }
+```
+
+ERROR
+----------------------
+```
+nginx: [error] invalid PID number "" in "/run/nginx.pid"
+```
+重启关闭时发生，可能是80端口占用，解决方案：干掉进程
+```Bash
+$ sudo fuser -k 80/tcp
 ```
