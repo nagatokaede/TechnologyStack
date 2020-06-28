@@ -85,13 +85,13 @@ WHERE TABLE_SCHEMA = 'databaseName';
 * 数据表数据操作
 ```Bash
 # 显示所有的数据库
-$ show [databases];
+$ show databases;
 
 # 进入 dataBaseName 数据库
-$ use [dataBaseName]
+$ use [dataBaseName];
 
 # 显示 dataBaseName 数据库的所有表
-$ show [tables];
+$ show tables;
 
 # 显示 tableName 表的字段信息
 $ desc [tableName];
