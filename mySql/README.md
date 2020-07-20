@@ -81,7 +81,15 @@ AND
 SELECT CONCAT('ALTER TABLE ', table_name, ' CONVERT TO CHARACTER SET  utf8 COLLATE utf8_unicode_ci;')
 FROM information_schema.TABLES
 WHERE TABLE_SCHEMA = 'databaseName';
+
+> SET NAMES 'utf8';
+
+# 它相当于下面的三句指令：
+> SET character_set_client = utf8;
+> SET character_set_results = utf8;
+> SET character_set_connection = utf8;
 ```
+
 * 数据表数据操作
 ```Bash
 # 显示所有的数据库
